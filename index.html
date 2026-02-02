@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Verification - ප්‍රවේශය තහවුරු කිරීම</title>
+    <!-- Basic CSS for a pleasant loading screen -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .container {
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+        }
+        p {
+            font-size: 1.15em;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top-color: #007bff; /* Blue color for the spinner */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0; /* Center the spinner */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Access Verification</h1>
+        <p>Your connection is being verified. Please wait...</p>
+        <p>ඔබගේ සම්බන්ධතාවය පරීක්ෂා කරමින් පවතී. කරුණාකර රැඳී සිටින්න...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // --- JavaScript Logic for Geo-IP and VPN/Proxy Detection ---
+
+        async function checkAccess() {
+            try {
+                // Verification eka patan gaththa welawa note karamu (2 seconds requirement ekata).
+                const startTime = performance.now(); 
+
+                // IP-API.com kiyanne free API ekak. Meken user ge IP address eka,
+                // country code eka, proxy/hosting status eka denawa.
+                // 'http' use karanne free tier walata wena limitations nisa.
+                // Browsers godak welawata meka handle karanawa HTTPS site ekaka unath.
+                const response = await fetch('http://ip-api.com/json/?fields=status,countryCode,proxy,hosting,query');
+                const data = await response.json();
+
+                // API eken success response ekak hambune neththam error ekak kiyala hithala,
+                // security ekata google.com walata redirect karamu.
+                if (data.status !== 'success') {
+                    console.error('IP-API error:', data);
+                    window.location.href = 'https://www.google.com';
+                    return;
+                }
+
+                const userCountryCode = data.countryCode; // E.g., 'US', 'LK', 'IN'
+                // 'proxy' ho 'hosting' (data center IPs) true nam, eka VPN/Proxy ekak widihata salakanawa.
+                // Meka 100% foolproof nemei, eth free tier walata hondata weda karanawa.
+                const isProxyOrHosting = data.proxy || data.hosting; 
+
+                const isUSA = userCountryCode === 'US'; // USA da kiyala check karanawa.
+
+                // Verification eka iwara wuna welawa balamu.
+                const endTime = performance.now();
+                console.log(`Verification completed in: ${(endTime - startTime).toFixed(2)} ms`);
+
+                if (isUSA && !isProxyOrHosting) {
+                    // User USA inwanam saha VPN/Proxy ekak use nokaranawanam,
+                    // oyage client ge requirement ekata anuwa facebook.com walata yawamu.
+                    window.location.href = 'https://www.facebook.com';
+                } else {
+                    // USA nemei nam, NATHTHAM (OR) VPN/Proxy ekak use karanawa nam,
+                    // google.com walata redirect karamu.
+                    window.location.href = 'https://www.google.com';
+                }
+
+            } catch (error) {
+                // Network error (e.g., internet nethi unoth, API unreachable unoth)
+                console.error('Error during access check:', error);
+                // Safety ekata, error ekak aawoth google.com walata redirect karamu.
+                window.location.href = 'https://www.google.com';
+            }
+        }
+
+        // Page eka load wunu gaman, DOM eka ready wenakam nokiyama me function eka call karanawa.
+        // Meken verification process eka godak ikmanata patan gannawa.
+        checkAccess();
+    </script>
+</body>
+</html>
